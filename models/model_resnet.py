@@ -9,7 +9,9 @@ from models.swin_T import Block
 from einops import rearrange 
 from einops.layers.torch import Rearrange
 from models.SCAB import SCAB
-
+import torchvision
+from torchvision import models
+import cv2
 class Mlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
         super().__init__()
@@ -35,6 +37,26 @@ class Salicon(nn.Module):
         super(Salicon, self).__init__()
 
         self.num_layers = 2
+
+        self.convert1 = nn.Sequential(nn.Conv2d(2048, 1024, 1, 1), nn.ReLU(inplace=True), nn.Conv2d(1024, 256, 1, 1),
+                                    nn.ReLU(inplace=True))
+        self.convert2 = nn.Sequential(nn.Conv2d(2048, 1024, 1, 1), nn.ReLU(inplace=True), nn.Conv2d(1024, 256, 1, 1),
+                                     nn.ReLU(inplace=True))
+        self.convert3 = nn.Sequential(nn.Conv2d(2048, 1024, 1, 1), nn.ReLU(inplace=True), nn.Conv2d(1024, 256, 1, 1),
+                                     nn.ReLU(inplace=True))
+        self.convert4 = nn.Sequential(nn.Conv2d(2048, 1024, 1, 1), nn.ReLU(inplace=True), nn.Conv2d(1024, 256, 1, 1),
+                                     nn.ReLU(inplace=True))
+        self.convert5 = nn.Sequential(nn.Conv2d(2048, 1024, 1, 1), nn.ReLU(inplace=True), nn.Conv2d(1024, 256, 1, 1),
+                                     nn.ReLU(inplace=True))
+        self.convert6 = nn.Sequential(nn.Conv2d(2048, 1024, 1, 1), nn.ReLU(inplace=True), nn.Conv2d(1024, 256, 1, 1),
+                                     nn.ReLU(inplace=True))
+        self.convert7 = nn.Sequential(nn.Conv2d(2048, 1024, 1, 1), nn.ReLU(inplace=True), nn.Conv2d(1024, 256, 1, 1),
+                                     nn.ReLU(inplace=True))
+        self.convert8 = nn.Sequential(nn.Conv2d(2048, 1024, 1, 1), nn.ReLU(inplace=True), nn.Conv2d(1024, 256, 1, 1),
+                                     nn.ReLU(inplace=True))
+        self.convert9 = nn.Sequential(nn.Conv2d(2048, 1024, 1, 1), nn.ReLU(inplace=True), nn.Conv2d(1024, 256, 1, 1),
+                                     nn.ReLU(inplace=True))
+        
 
         self.conv1_1 = nn.Sequential(
             nn.Conv2d(9, 64, 3, 1, 1),
@@ -64,6 +86,9 @@ class Salicon(nn.Module):
             nn.Conv2d(96 // 4, 96, 3, 1, 1)
         )
         self.conv4 = nn.Conv2d(96, 96, 3, 2, 1)
+
+        self.resnet50 = models.resnet50(pretrained=True)
+        self.resnet50 = nn.Sequential(*list(self.resnet50.children())[:-2])
 
         self.mlp =  Mlp(96, 96, act_layer=nn.GELU, drop=0.)
 
@@ -103,6 +128,9 @@ class Salicon(nn.Module):
         for i_layer in range(self.num_layers):
             layer = Mlp(embed_dim, embed_dim, embed_dim, act_layer=nn.GELU, drop=0.)
             self.mlps.append(layer)
+        self.conv_me1 = nn.Sequential(nn.Conv2d(2304, 1024, kernel_size=3, padding=1, bias=True), nn.ReLU(inplace=True))
+        self.conv_me2 = nn.Sequential(nn.Conv2d(1024, 512, kernel_size=3, padding=1, bias=True), nn.ReLU(inplace=True))
+        self.conv_me3 = nn.Sequential(nn.Conv2d(512, 256, kernel_size=3, padding=1, bias=True), nn.ReLU(inplace=True))
 
         self.multi_exposure = nn.Sequential(
             nn.Conv2d(96, 128, kernel_size=3, padding=1, bias=True),
@@ -134,12 +162,28 @@ class Salicon(nn.Module):
 
 
     def forward(self, raw_img, img_me1, img_me2, img_me3, img_me4, img_me5, img_me6, img_me7, img_me8, img_me9):
+        x_1 = self.convert1(self.resnet50(img_me1)) # 1x256x19x25, B C H W
+        x_1 = x_1.view(x_1.size(0), x_1.size(1), -1).permute(0, 2, 1) # 1x475x256 B HW C
+        x_2 = self.convert2(self.resnet50(img_me2))
+        x_2 = x_2.view(x_2.size(0), x_2.size(1), -1).permute(0, 2, 1)
+        x_3 = self.convert3(self.resnet50(img_me3))
+        x_3 = x_3.view(x_3.size(0), x_3.size(1), -1).permute(0, 2, 1)
+        x_4 = self.convert4(self.resnet50(img_me4))
+        x_4 = x_4.view(x_4.size(0), x_4.size(1), -1).permute(0, 2, 1)
+        x_5 = self.convert5(self.resnet50(img_me5))
+        x_5 = x_5.view(x_5.size(0), x_5.size(1), -1).permute(0, 2, 1)
+        x_6 = self.convert6(self.resnet50(img_me6))
+        x_6 = x_6.view(x_6.size(0), x_6.size(1), -1).permute(0, 2, 1)
+        x_7 = self.convert7(self.resnet50(img_me7))
+        x_7 = x_7.view(x_7.size(0), x_7.size(1), -1).permute(0, 2, 1)
+        x_8 = self.convert8(self.resnet50(img_me8))
+        x_8 = x_8.view(x_8.size(0), x_8.size(1), -1).permute(0, 2, 1)
+        x_9 = self.convert9(self.resnet50(img_me9))
+        x_9 = x_9.view(x_9.size(0), x_9.size(1), -1).permute(0, 2, 1)
+
         x_1 = torch.cat([img_me1, img_me2, img_me3], dim=1)
         x_2 = torch.cat([img_me4, img_me5, img_me6], dim=1)
         x_3 = torch.cat([img_me7, img_me8, img_me9], dim=1)
-        x_1 = self.conv1_1(x_1)
-        x_2 = self.conv1_2(x_2)
-        x_3 = self.conv1_3(x_3)
 
         x = torch.cat([x_1, x_2, x_3], dim=1)
 
@@ -151,3 +195,11 @@ class Salicon(nn.Module):
         sal_map = self.Sigmoid(sal_map)
         #print('sal_map:',sal_map.size())
         return sal_map
+
+
+    def show_feature_map(self, feature_tensor):
+        feature_image = feature_tensor.mean(0).cpu().detach().numpy()
+        feature_image = cv2.normalize(feature_image, None, alpha=0, beta=255, 
+                                  norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        save_path = r"./result.png"
+        cv2.imwrite(save_path, feature_image)

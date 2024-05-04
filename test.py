@@ -10,7 +10,8 @@ from dataset.HDR_data import getTrainVal_loader,getTest_loader
 from models.model import Salicon
 from rich.progress import track
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+
+os.environ['CUDA_VISIBLE_DEVICES'] = "4"
 def test(model, test_loader, save_path):
     model.eval()
 
@@ -60,7 +61,7 @@ def main():
     test_label_dir = 'density'
     test_mutilexp_dir = 'multi_exposure'
     save_path = './results'
-    model_path = './checkpoints/salicon_150.pth'
+    model_path = './checkpoints/salicon_260.pth'
 
     save_dir_img = save_path +'/'
     if not os.path.isdir(save_dir_img):

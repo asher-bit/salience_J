@@ -19,7 +19,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs):
     # model.to(device)
 
     for epoch in range(num_epochs):
-        for phase in ['train','val']:
+        for phase in ['train']:
             running_loss=0
             if phase=='train':
                 model.train()
@@ -37,13 +37,18 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs):
 
                 with torch.autograd.set_grad_enabled(phase=='train'):
                     outputs = model(*inputs)
-                    loss = criterion(outputs,labels)
+                    loss1 = criterion(outputs,labels)
+                    loss_fc_2 = nn.CrossEntropyLoss()
+                    loss2 = loss_fc_2(outputs, labels)
+
+                    loss = loss1+loss2
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
 
+                running_loss+=loss.item()
 
-                running_loss+=loss.item()*inputs[0].size(0)
+                #running_loss+=loss.item()*inputs[0].size(0)
 
             epoch_loss=running_loss/len(dataloaders[phase])
 
@@ -62,11 +67,11 @@ def main():
 
     # train argument
     parser.add_argument('--batch_size', type=int, default=1, help='Input batch size for training')
-    parser.add_argument('--lr', type=float, default=0.01, help='Learning rate for training')
+    parser.add_argument('--lr', type=float, default=0.02, help='Learning rate for training')
     parser.add_argument('--momentum', type=float, default=0.9, help='Momentum for SGD')
     parser.add_argument('--decay', type=float, default=0.0005, help='Weight decay for SGD')
     parser.add_argument('--epochs', type=int, default=500, help='Number of epochs to train')
-
+    parser.add_argument('--checkpoints', type=bool, default=False, help='Number of epochs to train')
     args=parser.parse_args()
 
     train_dataset_dir='./IMLHDR'
@@ -89,6 +94,13 @@ def main():
  
     optimizer_ft=optim.SGD(model.parameters(),lr=args.lr,momentum=args.momentum,weight_decay=args.decay,nesterov=True)
     criterion_ft=nn.BCELoss()
+
+    if args.checkpoints == True:
+        path = r"/data/jiaoshengjie/Code/Saliency_transformer/checkpoints/salicon_150.pth"
+        checkpoint = torch.load(path)
+        model.load_state_dict(checkpoint)
+        #optimizer_ft.load_state_dict(checkpoint['optimizer'])
+
     train_model(model, dataloaders, criterion_ft, optimizer_ft, num_epochs=args.epochs)
 
 
